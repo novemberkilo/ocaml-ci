@@ -289,6 +289,50 @@ let repo_handle ~meth ~owner ~name ~repo path =
       | Error { Capnp_rpc.Exception.reason; _ } ->
         respond_error `Internal_server_error reason
     end
+  | `POST, ["commit"; hash; "cancel"] ->
+    let can_cancel (job: Current_rpc.Job.t) =
+      Current_rpc.Job.status job |> Lwt.map (fun rs -> 
+        match rs with 
+        | Ok s -> if s.Current_rpc.Job.can_cancel then Some job else None 
+        | Error _e -> None
+      )
+    in
+    let cancellable (jobs: Current_rpc.Job.t list) : (Current_rpc.Job.t list Lwt.t) =
+      Lwt_list.filter_map_s can_cancel jobs
+    in
+    let cancel_many (jobs : Current_rpc.Job.t list) : unit Lwt.t =
+      let open Lwt.Infix in 
+      cancellable jobs >>= fun job_list ->
+      Lwt_list.map_p Current_rpc.Job.cancel job_list >>= fun x ->
+        let log_error r =
+          match r with 
+          | Ok _-> ()
+          | Error _e -> Fmt.pr "Capnp error"
+        in
+        let _ = List.map log_error x in 
+        Lwt.return ()
+    in
+    let can_cancel' (job: Current_rpc.Job.t) =
+      Current_rpc.Job.status job |> Lwt.map (fun rs -> 
+        match rs with 
+        | Ok s -> s.Current_rpc.Job.can_cancel
+        | Error _e -> false
+      )
+    in
+    Capability.with_ref (Client.Repo.commit_of_hash repo hash) @@ fun commit ->
+    let jobs = Client.Commit.jobs commit in
+    jobs >>!= fun jobs ->
+    let cancel (job_info: Client.job_info) : unit Lwt.t =
+      Capability.with_ref (Client.Commit.job_of_variant commit job_info.Client.variant) @@ fun job ->
+        let status = Current_rpc.Job.status job in
+        status >>!= fun status ->
+        if status.Current_rpc.Job.can_cancel then Current_rpc.Job.cancel job else ()
+    in
+    let cancel_many' (job_infos: Client.job_info list) =
+      Lwt_list.iter_p cancel job_infos 
+    in
+    cancel_many' commit jobs
+    
   | _ ->
     Server.respond_not_found () |> normal_response
 
