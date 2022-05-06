@@ -97,5 +97,5 @@ let platforms opam_version =
       List.map make_release ovs @ distros
   | `Dev ->
       let[@warning "-8"] latest::previous::_ = List.rev OV.Releases.recent in
-      let ovs = [latest; previous; OV.Releases.v4_03] in
+      let ovs = [latest; previous] in
       List.map make_release ovs @ [make_release ~arch:`I386 latest]
