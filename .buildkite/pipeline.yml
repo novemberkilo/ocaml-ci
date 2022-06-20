@@ -1,0 +1,6 @@
+steps:
+  - command: "dune build @all"
+    label: "build"
+
+  - command: "dune runtest"
+    label: "test"
