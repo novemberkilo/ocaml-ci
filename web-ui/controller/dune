@@ -8,6 +8,7 @@
   unix
   yojson
   ppx_deriving_yojson.runtime
-  ocaml-ci-web.view)
+  ocaml-ci-web.view
+  client-utilities)
  (preprocess
   (pps ppx_deriving_yojson)))

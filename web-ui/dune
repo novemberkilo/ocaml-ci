@@ -17,4 +17,5 @@
   ocaml-ci-api
   capnp-rpc-unix
   ocaml-ci-web.controller
-  ocaml-ci-web.view))
+  ocaml-ci-web.view
+  client-utilities))

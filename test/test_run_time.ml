@@ -1,6 +1,7 @@
 module Index = Ocaml_ci.Index
 module Run_time = Ocaml_ci.Run_time
 module Job = Current.Job
+module Client = Ocaml_ci_api.Client
 
 let setup () =
   let db = Lazy.force Current.Db.v in
@@ -333,6 +334,69 @@ let test_timestamps_of_three_steps_build () =
   let result = Option.get @@ Run_time.of_build [ "job1"; "job2"; "job3" ] in
   Alcotest.(check timestamps) "timestamps_of_build" [ expected ] [ result ]
 
+let test_timestamps_from_job_info_queued =
+  let not_started_job : Client.job_info = {
+    variant="variant";
+    outcome=NotStarted;
+    queued_at=Some 1234567.;
+    started_at=None;
+    finished_at=None;
+  } in
+  let expected : Run_time.timestamps = Queued 1234567. in
+  let result = Run_time.timestamps_from_job_info not_started_job in
+  match result with
+  | Error e -> Alcotest.fail e
+  | Ok result ->
+    Alcotest.(check timestamps) "timestamps_from_job_info" [expected] [result]
+
+let test_timestamps_from_job_info_running =
+  let active_job : Client.job_info = {
+    variant="variant";
+    outcome=Active;
+    queued_at=Some 1234567.;
+    started_at=Some 1234570.;
+    finished_at=None;
+  } in
+  let expected : Run_time.timestamps = Running {ready=1234567.;started=1234570.} in
+  let result = Run_time.timestamps_from_job_info active_job in
+  match result with
+  | Error e -> Alcotest.fail e
+  | Ok result ->
+    Alcotest.(check timestamps) "timestamps_from_job_info" [expected] [result]
+
+let test_timestamps_from_job_info_finished =
+  let finished_job : Client.job_info = {
+    variant="variant";
+    outcome=Passed;
+    queued_at=Some 1234567.;
+    started_at=Some 1234570.;
+    finished_at=Some 1234575.;
+  } in
+  let expected : Run_time.timestamps = Finished {ready=1234567.;started=Some 1234570.;finished=1234575.} in
+  let result = Run_time.timestamps_from_job_info finished_job in
+  match result with
+  | Error e -> Alcotest.fail e
+  | Ok result ->
+    Alcotest.(check timestamps) "timestamps_from_job_info" [expected] [result]
+
+let test_timestamps_from_job_info_finished_with_errors =
+  let test (outcome : Client.State.t) =
+    let finished_job : Client.job_info = {
+      variant="variant";
+      outcome=outcome;
+      queued_at=Some 1234567.;
+      started_at=None;
+      finished_at=Some 1234575.;
+    } in
+    let expected : Run_time.timestamps = Finished {ready=1234567.;started=None;finished=1234575.} in
+    let result = Run_time.timestamps_from_job_info finished_job in
+    match result with
+    | Error e -> Alcotest.fail e
+    | Ok result ->
+      Alcotest.(check timestamps) "timestamps_from_job_info" [expected] [result]
+  in
+  List.iter test [Failed ""; Aborted]
+
 let tests =
   [
     Alcotest_lwt.test_case_sync "simple_run_times" `Quick test_simple_run_times;
@@ -365,4 +429,12 @@ let tests =
       test_timestamps_of_queued_build;
     Alcotest_lwt.test_case_sync "timestamps_of_queued_build" `Quick
       test_timestamps_of_three_steps_build;
+    Alcotest_lwt.test_case_sync "timestamps_from_job_info_queued" `Quick
+      (fun () -> test_timestamps_from_job_info_queued);
+    Alcotest_lwt.test_case_sync "timestamps_from_job_info_running" `Quick
+      (fun () -> test_timestamps_from_job_info_running);
+    Alcotest_lwt.test_case_sync "timestamps_from_job_info_finished" `Quick
+      (fun () -> test_timestamps_from_job_info_finished);
+    Alcotest_lwt.test_case_sync "timestamps_from_job_info_finished_error" `Quick
+      (fun () -> test_timestamps_from_job_info_finished_with_errors);
   ]

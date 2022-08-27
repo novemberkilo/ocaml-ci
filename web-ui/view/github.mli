@@ -1,5 +1,6 @@
 module Client = Ocaml_ci_api.Client
 module Common = Ocaml_ci_api.Common
+module Run_time = Client_utilities.Run_time
 
 module Build_status : sig
   type t = Client.Build_status.t
@@ -96,6 +97,7 @@ val list_steps :
   refs:string list ->
   hash:string ->
   jobs:Client.job_info list ->
+  timestamps:Run_time.timestamps option ->
   ?success_msg:
     ([< Html_types.div_content_fun > `Div `Ol `P `PCDATA `Ul ] as 'a)
     Tyxml_html.elt ->

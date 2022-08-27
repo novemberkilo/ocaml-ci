@@ -1,6 +1,7 @@
 open Lwt.Infix
 module Client = Ocaml_ci_api.Client
 module Capability = Capnp_rpc_lwt.Capability
+module Run_time = Client_utilities.Run_time
 
 let ( >>!= ) x f =
   x >>= function
@@ -40,9 +41,10 @@ let list_steps ~org ~repo ~hash request ci =
   Client.Commit.refs commit >>!= fun refs ->
   let csrf_token = Dream.csrf_tag request in
   let flash_messages = Dream.flash_messages request in
+  let timestamps = Run_time.from_jobs jobs in
   Dream.respond
   @@ View.Github.list_steps ~org ~repo ~refs ~hash ~jobs ~csrf_token
-       ~flash_messages ()
+       ~flash_messages ~timestamps ()
 
 let show_step ~org ~repo ~hash ~variant request ci =
   Capability.with_ref (Client.CI.org ci org) @@ fun org_cap ->
@@ -111,9 +113,10 @@ let cancel_steps ~org ~repo ~hash request ci =
   let fail_msg = View.Github.cancel_fail_message failed in
   let return_link = View.Github.return_link ~org ~repo ~hash in
   let csrf_token = Dream.csrf_tag request in
+  let timestamps = Run_time.from_jobs jobs in
   Dream.respond
   @@ View.Github.list_steps ~org ~repo ~refs ~hash ~jobs ~success_msg ~fail_msg
-       ~return_link ~csrf_token ()
+       ~return_link ~csrf_token ~timestamps ()
 
 let rebuild_steps ~rebuild_failed_only ~org ~repo ~hash request ci =
   let rebuild_many commit job_infos =
@@ -152,6 +155,7 @@ let rebuild_steps ~rebuild_failed_only ~org ~repo ~hash request ci =
   let fail_msg = View.Github.rebuild_fail_message failed in
   let return_link = View.Github.return_link ~org ~repo ~hash in
   let csrf_token = Dream.csrf_tag request in
+  let timestamps = Run_time.from_jobs jobs in
   Dream.respond
   @@ View.Github.list_steps ~org ~repo ~refs ~hash ~jobs ~success_msg ~fail_msg
-       ~return_link ~csrf_token ()
+       ~return_link ~csrf_token ~timestamps ()

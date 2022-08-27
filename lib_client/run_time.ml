@@ -1,8 +1,7 @@
-module Client = Ocaml_ci_api.Client
-
 let src = Logs.Src.create "ocaml_ci.run_time" ~doc:"ocaml-ci run-time"
 
 module Log = (val Logs.src_log src : Logs.LOG)
+module Client = Ocaml_ci_api.Client
 
 let duration_pp ppf t =
   let hour = 3600_000_000_000L in
