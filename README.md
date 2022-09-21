@@ -2,7 +2,7 @@
 
 [![OCaml-CI Build Status](https://img.shields.io/endpoint?url=https%3A%2F%2Fci.ocamllabs.io%2Fbadge%2Focurrent%2Focaml-ci%2Fmaster&logo=ocaml)](https://ci.ocamllabs.io/github/ocurrent/ocaml-ci)
 
-This is an [OCurrent][] ALPHA RELEASE EARLY VERSION pipeline that provides CI for OCaml projects hosted on GitHub.
+This is an [OCurrent][] ALPHA RELEASE EARLY VERSION TEST pipeline that provides CI for OCaml projects hosted on GitHub.
 It uses metadata from the project’s opam and dune files to work out what to build,
 and uses caching to make builds fast. It automatically tests projects against
 multiple OCaml versions and OS platforms.
