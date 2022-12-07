@@ -1,6 +1,6 @@
 let title_card ~status ~card_title ~hash_link ~ref_links ~first_created_at
     ~ran_for ~total_run_time ~buttons ~history_url =
-  Dream.log "Build title card: history url: %s" history_url;
+  (* Dream.log "Build title card: history url: %s" history_url; *)
   let ref_links =
     let initial =
       Tyxml.Html.
@@ -32,18 +32,24 @@ let title_card ~status ~card_title ~hash_link ~ref_links ~first_created_at
               [
                 div
                   ~a:[ a_class [ "flex items-center" ] ]
-                  [
-                    h1
-                      ~a:[ a_class [ "text-xl" ] ]
-                      [ txt (Common.truncate ~len:80 card_title) ];
-                    a
-                      ~a:
-                        [
-                          a_class [ "btn btn-secondary btn-sm ml-4" ];
-                          a_href history_url;
-                        ]
-                      [ txt "Build History" ];
-                  ];
+                  ([
+                     h1
+                       ~a:[ a_class [ "text-xl" ] ]
+                       [ txt (Common.truncate ~len:80 card_title) ];
+                   ]
+                  @
+                  match history_url with
+                  | None -> []
+                  | Some history_url ->
+                      [
+                        a
+                          ~a:
+                            [
+                              a_class [ "btn btn-secondary btn-sm ml-4" ];
+                              a_href history_url;
+                            ]
+                          [ txt "Build History" ];
+                      ]);
                 div
                   ~a:[ a_class [ "text-gray-500" ] ]
                   [
