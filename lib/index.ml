@@ -574,9 +574,9 @@ let record ~repo ~hash ~status ~gref jobs =
   let merge variant prev job =
     let set job_id =
       Log.info (fun f ->
-          f "@[<h>Index.record %s/%s %s %s -> %a@]" owner name
+          f "@[<h>Index.record %s/%s %s %s %s -> %a@]" owner name
             (Astring.String.with_range ~len:6 hash)
-            variant
+            gref variant
             Fmt.(option ~none:(any "-") string)
             job_id);
       match job_id with
